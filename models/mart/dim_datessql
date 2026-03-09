@@ -1,0 +1,43 @@
+{{
+    config(
+        materialized='table'
+    )
+}}
+
+WITH date_spine AS (
+    SELECT
+        DATE_ADD('2020-01-01', INTERVAL day_offset DAY) AS date_day
+    FROM UNNEST(GENERATE_ARRAY(0, 3650)) AS day_offset  -- 10 years of dates
+),
+
+dates AS (
+    SELECT
+        -- Primary key
+        FORMAT_DATE('%Y%m%d', date_day) AS date_id,
+        
+        -- Date attributes
+        date_day AS full_date,
+        EXTRACT(YEAR FROM date_day) AS year,
+        EXTRACT(QUARTER FROM date_day) AS quarter,
+        EXTRACT(MONTH FROM date_day) AS month,
+        EXTRACT(WEEK FROM date_day) AS week,
+        EXTRACT(DAY FROM date_day) AS day,
+        EXTRACT(DAYOFWEEK FROM date_day) AS day_of_week,
+        
+        -- Named attributes
+        FORMAT_DATE('%B', date_day) AS month_name,
+        FORMAT_DATE('%A', date_day) AS day_name,
+        
+        -- Flags
+        CASE WHEN EXTRACT(DAYOFWEEK FROM date_day) IN (1, 7) THEN TRUE ELSE FALSE END AS is_weekend,
+        
+        -- Quarter
+        CONCAT('Q', EXTRACT(QUARTER FROM date_day)) AS quarter_name,
+        
+        -- Year-Month for grouping
+        FORMAT_DATE('%Y-%m', date_day) AS year_month
+        
+    FROM date_spine
+)
+
+SELECT * FROM dates

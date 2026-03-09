@@ -1,0 +1,227 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw source data from BeejanRide's transactional database."
+    database: beejan-analytics-489315
+    schema: raw
+    loader: Airbyte
+
+    config:
+      freshness:
+        warn_after: {count: 2, period: hour}
+        error_after: {count: 4, period: hour}
+      tags: ['raw', 'source']
+      meta:
+        owner: "data_engineering"
+
+    tables:
+
+      - name: trips_raw
+        description: "Core business table containing all ride requests."
+
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after: {count: 1, period: hour}
+            error_after: {count: 2, period: hour}
+          tags: ['core', 'revenue', 'operations']
+
+        columns:
+          - name: trip_id
+            tests: [unique, not_null]
+
+          - name: rider_id
+            tests: [not_null]
+
+          - name: driver_id
+            tests: [not_null]
+
+          - name: vehicle_id
+            tests: [not_null]
+
+          - name: city_id
+            tests: [not_null]
+
+          - name: requested_at
+            tests: [not_null]
+
+          - name: pickup_at
+
+          - name: dropoff_at
+
+          - name: status
+            tests:
+              - not_null
+
+          - name: estimated_fare
+            tests: [not_null]
+
+          - name: actual_fare
+
+          - name: surge_multiplier
+            tests: [not_null]
+
+          - name: payment_method
+            tests:
+              - not_null
+
+          - name: is_corporate
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: [true, false]
+
+          - name: created_at
+            tests: [not_null]
+
+          - name: updated_at
+            tests: [not_null]
+
+      - name: drivers_raw
+        description: "Driver information and current status."
+
+        config:
+          loaded_at_field: updated_at
+          freshness:
+            warn_after: {count: 24, period: hour}
+            error_after: {count: 48, period: hour}
+          tags: ['core', 'drivers', 'operations']
+
+        columns:
+          - name: driver_id
+            tests: [unique, not_null]
+
+          - name: onboarding_date
+            tests: [not_null]
+
+          - name: driver_status
+            tests:
+              - not_null
+
+          - name: city_id
+            tests: [not_null]
+
+          - name: vehicle_id
+            tests: [not_null]
+
+          - name: rating
+            tests: [not_null]
+
+          - name: created_at
+            tests: [not_null]
+
+          - name: updated_at
+            tests: [not_null]
+
+      - name: riders_raw
+        description: "Rider/customer information."
+
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after: {count: 24, period: hour}
+            error_after: {count: 48, period: hour}
+          tags: ['core', 'riders', 'marketing']
+
+        columns:
+          - name: rider_id
+            tests: [unique, not_null]
+
+          - name: signup_date
+            tests: [not_null]
+
+          - name: country
+            tests: [not_null]
+
+          - name: referral_code
+
+          - name: created_at
+            tests: [not_null]
+
+      - name: payments_raw
+        description: "Payment transactions for trips."
+
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after: {count: 1, period: hour}
+            error_after: {count: 3, period: hour}
+          tags: ['core', 'finance', 'payments']
+
+        columns:
+          - name: payment_id
+            tests: [unique, not_null]
+
+          - name: trip_id
+            tests: [not_null]
+
+          - name: payment_status
+            tests:
+              - not_null
+
+          - name: payment_provider
+            tests:
+              - not_null
+
+          - name: amount
+            tests: [not_null]
+
+          - name: fee
+
+          - name: currency
+            tests: [not_null]
+
+          - name: created_at
+            tests: [not_null]
+
+      - name: cities_raw
+        description: "City information."
+
+        config:
+          loaded_at_field: created_at
+          freshness:
+            warn_after: {count: 168, period: hour}
+            error_after: {count: 720, period: hour}
+          tags: ['core', 'cities', 'geography']
+
+        columns:
+          - name: city_id
+            tests: [unique, not_null]
+
+          - name: city_name
+            tests: [not_null]
+
+          - name: country
+            tests: [not_null]
+
+          - name: launch_date
+            tests: [not_null]
+
+      - name: driver_status_events_raw
+        description: "High volume driver online/offline event stream."
+
+        config:
+          loaded_at_field: event_timestamp
+          freshness:
+            warn_after: {count: 30, period: minute}
+            error_after: {count: 1, period: hour}
+          tags: ['core', 'drivers', 'events', 'high_volume']
+
+        columns:
+          - name: event_id
+            tests: [unique, not_null]
+
+          - name: driver_id
+            tests: [not_null]
+
+          - name: status
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['online', 'offline']
+
+          - name: event_timestamp
+            tests: [not_null]
