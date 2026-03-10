@@ -135,7 +135,7 @@ LEFT JOIN stg_payments p ON t.trip_id = p.trip_id
 WHERE t.trip_status = 'completed' 
   AND (p.payment_status != 'success' OR p.payment_id IS NULL)
   # Clone repository
-git clone https://github.com/yourusername/beejanride-analytics
+git clone https://github.com/mabelyunaan/beejanride-analytics
 cd beejanride-analytics
 
 # Create virtual environment
